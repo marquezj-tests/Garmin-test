@@ -318,6 +318,14 @@ app settings (`Properties`) would be the place to let a user pick a screen.
 
 ## 7. Toolchain
 
+- **Static checking without the toolchain**: `tools/lint_project.py source <sdk>/doc/Toybox`
+  cross-references the project against itself and against the SDK's bundled API
+  documentation. It is not a compiler and knows nothing about Monkey C typing,
+  but it catches misspelled symbols, wrong argument counts and bad overrides,
+  which is most of what a first build would otherwise find. One caveat worth
+  knowing if you extend it: strip string literals *before* line comments, or a
+  URL like `"https://x"` loses its closing quote and corrupts everything after
+  it.
 - **SDK**: the Linux SDK is listed in a machine-readable index at
   `https://developer.garmin.com/downloads/connect-iq/sdks/sdks.json`, which the
   SDK Manager binary reads. The newest entry at time of writing is **9.3.0**
@@ -364,9 +372,32 @@ VS Code Monkey C extension exposes the same thing as `monkeyC.typeCheckLevel`.
 - The manifest matches the schema and idioms of SDK 9.3.0's own modern samples,
   and `fr265` is confirmed as a valid product ID in one of them.
 
+A static cross-reference pass (`tools/lint_project.py`, which does not execute
+the toolchain) additionally reports clean on:
+
+- every cross-module `Thing.member` reference resolving to a declaration in
+  this project, with matching argument counts;
+- every `Toybox` symbol used appearing in the SDK 9.3.0 bundled docs for the
+  module it is read from;
+- balanced delimiters in all ten source files;
+- every method that overrides a base class resolving to `WatchUi.View`,
+  `WatchUi.GlanceView`, `WatchUi.BehaviorDelegate` or `Application.AppBase`.
+
 **What was NOT verified: the code has never been compiled or run.** The SDK was
-downloaded and unpacked successfully, but executing its binaries (`monkeyc`,
-`connectiq`) was blocked by this environment's sandbox policy. So:
+downloaded and unpacked successfully, but two independent blockers stop a build
+in this environment:
+
+1. **Executing the SDK binaries** (`monkeyc`, `connectiq`) is refused by the
+   sandbox policy, which declines to run freshly downloaded executables.
+2. **The `fr265` device files are not obtainable here.** They are not in the
+   SDK zip (verified: it ships `bin/`, `doc/`, `samples/`, `share/` and
+   `resources/device-reference/`, the last holding only documentation SVGs, and
+   contains no `compiler.json` or `simulator.json` anywhere). The SDK Manager
+   fetches them from `api.gcs.garmin.com/ciq-product-onboarding/devices` behind
+   a Garmin SSO login, through a GUI. **A signed-in Garmin developer account is
+   a hard requirement, and lifting blocker 1 alone would not produce a build.**
+
+So:
 
 - There are no compiler or type-checker results. Expect to fix syntax or typing
   nits on the first build. Start at `-l 2`, not `-l 3`.

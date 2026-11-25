@@ -27,6 +27,7 @@ there before trusting this code: it has not been compiled.**
 | `source/EssGlanceView.mc` | Glance tile |
 | `source/EssOpiApp.mc` | `AppBase` entry points |
 | `tools/make_icon.py` | Regenerates the 60x60 launcher icon |
+| `tools/lint_project.py` | Static cross-reference check (stands in for a compiler) |
 
 ## Controls
 
@@ -61,6 +62,21 @@ monkeyc -f monkey.jungle -d fr265 -y developer_key.der -o bin/EssOpi.prg -l 2
 
 `-l 2` is the "informative" Monkey Types level. Start there; `-l 3` (strict)
 is the goal but has not been exercised — see the study.
+
+**The `fr265` device files are not in the SDK zip.** Run the GUI SDK Manager
+once, signed in to a Garmin developer account, to install them; `monkeyc -d
+fr265` fails without them.
+
+### Checking without the toolchain
+
+```sh
+python3 tools/lint_project.py source /path/to/connectiq-sdk-lin-9.3.0/doc/Toybox
+```
+
+Cross-references the project against itself and against the SDK's bundled API
+docs: unresolved symbols, wrong argument counts, bad overrides, unbalanced
+delimiters. Not a type checker, but it catches most of what a first build
+would.
 
 ## Running in the simulator
 
