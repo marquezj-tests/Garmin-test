@@ -1,0 +1,6 @@
+project.manifest = manifest.xml
+
+# Source and resources sit in the default locations (source/, resources/), so
+# no sourcePath/resourcePath overrides are needed. The type-check level is a
+# compiler flag rather than a jungle setting - see README.md for the exact
+# monkeyc invocation.
